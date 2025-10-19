@@ -66,8 +66,8 @@ with DAG(
         producer_function_kwargs={
             "api_key": "{{ var.value.TMDB_API_KEY }}",
             "base_url": "{{ var.value.TMDB_API_BASE_URL}}",
-            "start_date": "{{ ds }}",
-            "end_date": "{{ (macros.datetime.strptime(ds, '%Y-%m-%d') + macros.timedelta(days=1)).strftime('%Y-%m-%d') }}",
+            "start_date": "{{ (macros.datetime.strptime(ds, '%Y-%m-%d') + macros.timedelta(days=-1)).strftime('%Y-%m-%d') }}",
+            "end_date": "{{ ds }}",
         },
     )
 
