@@ -39,7 +39,7 @@ def get_movie_ids(start_date: str, end_date: str, api_key: str, base_url: str):
 
         for movie in data.get("results", []):
             details = _get_movie_details(movie["id"], details_url, headers)
-            yield (movie["id"], json.dumps(details))
+            yield (str(movie["id"]), json.dumps(details))
             time.sleep(random.randint(3, 5))  # To respect rate limits
 
         if page >= data.get("total_pages", 0):
