@@ -50,8 +50,8 @@ def get_movie_ids(start_date: str, end_date: str, api_key: str, base_url: str):
 
 with DAG(
     dag_id="tmdb_dag",
-    start_date=datetime(2025, 10, 19, 2),
-    schedule="@daily",
+    start_date=datetime(2025, 10, 18, 2),
+    schedule="0 2 * * *",
     catchup=False,
     tags=["tmdb", "kafka", "producer"],
 ):
