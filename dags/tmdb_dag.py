@@ -33,9 +33,7 @@ def get_movie_ids(start_date: str, end_date: str, api_key: str, base_url: str):
         return response.json()
 
     while True:
-        response = requests.get(
-            discover_url.format(page=page), headers=headers, params=params
-        )
+        response = requests.get(discover_url, headers=headers, params=params)
         data = response.json()
 
         for movie in data.get("results", []):
