@@ -62,7 +62,7 @@ with DAG(
         task_id="produce_tmdb_data_to_kafka",
         kafka_config_id="kafka_conn",
         topic="tmdb",
-        producer_function="tmdb_dag.get_movie_ids",
+        producer_function=get_movie_ids,
         producer_function_kwargs={
             "api_key": "{{ var.value.TMDB_API_KEY }}",
             "base_url": "{{ var.value.TMDB_API_BASE_URL}}",
