@@ -61,12 +61,12 @@ with DAG(
         kafka_config_id="kafka_conn",
         topic="tmdb",
         producer_function=get_movie_ids,
-        producer_function_args={
-            "api_key": "{{ var.value.TMDB_API_KEY }}",
-            "base_url": "{{ var.value.TMDB_API_BASE_URL}}",
-            "start_date": "{{ (macros.datetime.strptime(ds, '%Y-%m-%d') + macros.timedelta(days=-1)).strftime('%Y-%m-%d') }}",
-            "end_date": "{{ ds }}",
-        },
+        producer_function_args=[
+            "{{ (macros.datetime.strptime(ds, '%Y-%m-%d') + macros.timedelta(days=-1)).strftime('%Y-%m-%d') }}",
+            "{{ ds }}",
+            "{{ var.value.TMDB_API_KEY }}",
+            "{{ var.value.TMDB_API_BASE_URL}}",
+        ],
     )
 
     start >> produce_to_kafka >> end
