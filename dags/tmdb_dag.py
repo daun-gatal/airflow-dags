@@ -30,19 +30,49 @@ def get_movie_ids(start_date: str, end_date: str, api_key: str, base_url: str):
     details_url = base_url + "/movie/{movie_id}"
 
     def _get_movie_details(movie_id: int, details_url: str, headers: dict):
-        response = requests.get(details_url.format(movie_id=movie_id), headers=headers)
-        return response.json()
+        try:
+            response = requests.get(
+                details_url.format(movie_id=movie_id), headers=headers
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching details for movie {movie_id}: {e}")
+            return None
 
     while True:
-        response = requests.get(discover_url, headers=headers, params=params)
-        data = response.json()
+        # FIX: Update page parameter in each iteration
+        params["page"] = page
 
-        for movie in data.get("results", []):
-            details = _get_movie_details(movie["id"], details_url, headers)
-            yield (str(movie["id"]), json.dumps(details))
-            time.sleep(random.randint(3, 5))  # To respect rate limits
+        try:
+            response = requests.get(discover_url, headers=headers, params=params)
+            response.raise_for_status()
+            data = response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching page {page}: {e}")
+            break
 
-        if page >= data.get("total_pages", 0):
+        results = data.get("results", [])
+
+        if not results:
+            print(f"No results found on page {page}")
+            break
+
+        for movie in results:
+            movie_id = movie.get("id")
+            if not movie_id:
+                continue
+
+            details = _get_movie_details(movie_id, details_url, headers)
+
+            if details:
+                yield (str(movie_id), json.dumps(details))
+                time.sleep(random.randint(3, 5))  # To respect rate limits
+
+        total_pages = data.get("total_pages", 0)
+        print(f"Processed page {page} of {total_pages}")
+
+        if page >= total_pages:
             break
 
         page += 1
