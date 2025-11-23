@@ -12,16 +12,41 @@ def k3s_pyspark_tmdb(conf: dict) -> None:
     from kubernetes.client.exceptions import ApiException
 
     config.load_incluster_config()
-    api_client = client.ApiClient()
+    api_client = client.CustomObjectsApi()
 
     try:
-        utils.create_from_dict(api_client, conf, namespace="spark")
-    except ApiException as e:
-        if e.status == 409:
-            logger.warning(f"Resource already exists")
+        # Try to get existing
+        api_client.get_namespaced_custom_object(
+            group="spark.apache.org",
+            version="v1beta1",
+            namespace=conf["metadata"]["namespace"],
+            plural="sparkapplications",
+            name=conf["metadata"]["name"],
+        )
+
+        api_client.replace_namespaced_custom_object(
+            group="spark.apache.org",
+            version="v1beta1",
+            namespace=conf["metadata"]["namespace"],
+            plural="sparkapplications",
+            name=conf["metadata"]["name"],
+            body=conf,
+        )
+    except client.exceptions.ApiException as e:
+        if e.status == 404:
+            # Not exists → create
+            api_client.create_namespaced_custom_object(
+                group="spark.apache.org",
+                version="v1beta1",
+                namespace=conf["metadata"]["namespace"],
+                plural="sparkapplications",
+                body=conf,
+            )
+            print(f"Created SparkApplication: {conf['metadata']['name']}")
         else:
             raise e
     except Exception as e:
+        logger.error(f"Error deploying SparkApplication: {e}")
         raise e
 
 
