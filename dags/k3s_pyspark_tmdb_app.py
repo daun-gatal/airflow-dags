@@ -8,8 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def k3s_pyspark_tmdb(conf: dict) -> None:
-    from kubernetes import client, config, utils
-    from kubernetes.client.exceptions import ApiException
+    from kubernetes import client, config
 
     config.load_incluster_config()
     api_client = client.CustomObjectsApi()
