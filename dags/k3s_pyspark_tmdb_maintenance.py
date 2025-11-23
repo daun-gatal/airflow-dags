@@ -11,45 +11,49 @@ def k3s_pyspark_tmdb(conf: dict) -> None:
     from kubernetes import client, config
 
     config.load_incluster_config()
-    api_client = client.CustomObjectsApi()
+    batch = client.BatchV1Api()
+
+    name = conf["metadata"]["name"]
+    namespace = conf["metadata"].get("namespace", "spark")
 
     try:
-        # Try to get existing
-        api_client.get_namespaced_custom_object(
-            group="spark.apache.org",
-            version="v1beta1",
-            namespace=conf["metadata"]["namespace"],
-            plural="sparkapplications",
-            name=conf["metadata"]["name"],
+        # Check if job exists
+        batch.read_namespaced_job(name=name, namespace=namespace)
+
+        # If exists, delete first (safe for immutable fields)
+        batch.delete_namespaced_job(
+            name=name,
+            namespace=namespace,
+            body=client.V1DeleteOptions(propagation_policy="Foreground"),
         )
 
-        api_client.replace_namespaced_custom_object(
-            group="spark.apache.org",
-            version="v1beta1",
-            namespace=conf["metadata"]["namespace"],
-            plural="sparkapplications",
-            name=conf["metadata"]["name"],
-            body=conf,
-        )
+        # Wait until job disappears (optional but safer)
+        import time
+
+        for _ in range(30):
+            try:
+                batch.read_namespaced_job(name=name, namespace=namespace)
+                time.sleep(1)
+            except client.exceptions.ApiException as e:
+                if e.status == 404:
+                    break
+                else:
+                    raise
+
+        # Recreate job fresh
+        batch.create_namespaced_job(namespace=namespace, body=conf)
+        logger.info(f"Recreated Job: {name}")
+
     except client.exceptions.ApiException as e:
         if e.status == 404:
-            # Not exists → create
-            api_client.create_namespaced_custom_object(
-                group="spark.apache.org",
-                version="v1beta1",
-                namespace=conf["metadata"]["namespace"],
-                plural="sparkapplications",
-                body=conf,
-            )
-            logger.warning(f"Created SparkApplication: {conf['metadata']['name']}")
+            # Job does not exist yet → create new one
+            batch.create_namespaced_job(namespace=namespace, body=conf)
+            logger.info(f"Created Job: {name}")
         else:
             raise e
-    except Exception as e:
-        logger.error(f"Error deploying SparkApplication: {e}")
-        raise e
 
 
-def deploy_pyspark_tmdb_app(
+def deploy_pyspark_tmdb_job(
     openbao_addr: str, username: str, password: str, namespace: str
 ) -> None:
 
@@ -68,17 +72,17 @@ def deploy_pyspark_tmdb_app(
     )
 
     data = secret["data"]["data"]
-    app = json.loads(data["app"])
+    job = json.loads(data["job"])
 
-    k3s_pyspark_tmdb(conf=app)
+    k3s_pyspark_tmdb(conf=job)
 
 
 with DAG(
-    dag_id="k3s_pyspark_tmdb_app",
+    dag_id="k3s_pyspark_tmdb_maintenance",
     start_date=datetime(2025, 11, 22, 2),
-    schedule="0 2 * * *",
+    schedule="0 3 * * *",
     catchup=False,
-    tags=["tmdb", "pyspark", "consumer", "k3s"],
+    tags=["tmdb", "pyspark", "maintenance", "k3s"],
 ):
     from airflow.providers.standard.operators.empty import EmptyOperator
     from airflow.providers.standard.operators.python import PythonOperator
@@ -86,9 +90,9 @@ with DAG(
     start = EmptyOperator(task_id="start_execution")
     end = EmptyOperator(task_id="end_execution")
 
-    deploy_tmdb_app = PythonOperator(
+    deploy_tmdb_job = PythonOperator(
         task_id="deploy_pyspark_tmdb_app",
-        python_callable=deploy_pyspark_tmdb_app,
+        python_callable=deploy_pyspark_tmdb_job,
         op_kwargs={
             "openbao_addr": "{{ var.json.OPENBAO_SECRET.openbao_addr }}",
             "username": "{{ var.json.OPENBAO_SECRET.username }}",
@@ -97,4 +101,4 @@ with DAG(
         },
     )
 
-    start >> deploy_tmdb_app >> end
+    start >> deploy_tmdb_job >> end
