@@ -73,8 +73,10 @@ def deploy_pyspark_tmdb_job(
 
     data = secret["data"]["data"]
     job = json.loads(data["job"])
+    refined = json.loads(data["refined"])
 
-    k3s_pyspark_tmdb(conf=job)
+    for j in [job, refined]:
+        k3s_pyspark_tmdb(conf=j)
 
 
 with DAG(
