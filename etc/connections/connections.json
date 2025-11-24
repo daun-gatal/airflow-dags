@@ -1,0 +1,22 @@
+{
+  "kafka_conn": {
+    "conn_type": "kafka",
+    "description": null,
+    "login": null,
+    "password": null,
+    "host": null,
+    "port": null,
+    "schema": null,
+    "extra": "{\n  \"bootstrap.servers\": \"localhost:9092\"\n}"
+  },
+  "minio_conn": {
+    "conn_type": "aws",
+    "description": null,
+    "login": "",
+    "password": "",
+    "host": null,
+    "port": null,
+    "schema": null,
+    "extra": "{\"region_name\": \"us-east-1\", \"endpoint_url\": \"http://localhost:9000\"}"
+  }
+}

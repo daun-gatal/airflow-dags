@@ -15,13 +15,15 @@ def k3s_pyspark_tmdb(conf: dict) -> None:
 
     try:
         # Try to get existing
-        api_client.get_namespaced_custom_object(
+        current = api_client.get_namespaced_custom_object(
             group="spark.apache.org",
             version="v1beta1",
             namespace=conf["metadata"]["namespace"],
             plural="sparkapplications",
             name=conf["metadata"]["name"],
         )
+
+        conf["metadata"]["resourceVersion"] = current["metadata"]["resourceVersion"]
 
         api_client.replace_namespaced_custom_object(
             group="spark.apache.org",

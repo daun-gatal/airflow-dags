@@ -1,0 +1,10 @@
+{
+    "OPENBAO_SECRET": {
+        "namespace": "",
+        "openbao_addr": "",
+        "password": "",
+        "username": ""
+    },
+    "TMDB_API_BASE_URL": "https://api.themoviedb.org/3",
+    "TMDB_API_KEY": ""
+}
