@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import time
 
 from airflow.sdk import DAG
 
@@ -12,43 +13,45 @@ def k3s_pyspark_tmdb(conf: dict) -> None:
 
     config.load_incluster_config()
     api_client = client.CustomObjectsApi()
+    name = conf["metadata"]["name"]
+    namespace = conf["metadata"]["namespace"]
 
     try:
-        # Try to get existing
-        current = api_client.get_namespaced_custom_object(
-            group="spark.apache.org",
-            version="v1beta1",
-            namespace=conf["metadata"]["namespace"],
-            plural="sparkapplications",
-            name=conf["metadata"]["name"],
-        )
-
-        conf["metadata"]["resourceVersion"] = current["metadata"]["resourceVersion"]
-
-        api_client.replace_namespaced_custom_object(
-            group="spark.apache.org",
-            version="v1beta1",
-            namespace=conf["metadata"]["namespace"],
-            plural="sparkapplications",
-            name=conf["metadata"]["name"],
-            body=conf,
-        )
-    except client.exceptions.ApiException as e:
-        if e.status == 404:
-            # Not exists → create
-            api_client.create_namespaced_custom_object(
+        # Delete the existing SparkApplication
+        try:
+            api_client.delete_namespaced_custom_object(
                 group="spark.apache.org",
                 version="v1beta1",
-                namespace=conf["metadata"]["namespace"],
+                namespace=namespace,
                 plural="sparkapplications",
-                body=conf,
+                name=name,
             )
-            logger.warning(f"Created SparkApplication: {conf['metadata']['name']}")
-        else:
-            raise e
+            logger.info(f"Deleting existing SparkApplication: {name}")
+
+        except client.exceptions.ApiException as e:
+            if e.status == 404:
+                logger.info(
+                    f"SparkApplication {name} does not exist. Creating new one."
+                )
+            else:
+                raise e
+
+        # Optional: wait a bit until deletion is completed
+        time.sleep(5)
+
+        # Create again (apply)
+        api_client.create_namespaced_custom_object(
+            group="spark.apache.org",
+            version="v1beta1",
+            namespace=namespace,
+            plural="sparkapplications",
+            body=conf,
+        )
+        logger.info(f"Applied SparkApplication: {name}")
+
     except Exception as e:
         logger.error(f"Error deploying SparkApplication: {e}")
-        raise e
+        raise
 
 
 def deploy_pyspark_tmdb_app(
