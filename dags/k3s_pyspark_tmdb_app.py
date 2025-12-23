@@ -77,7 +77,7 @@ def deploy_pyspark_tmdb_app(
     connect = data["connect"]
 
     for job in [app, connect]:
-        k3s_pyspark_tmdb(conf=job)
+        k3s_pyspark_tmdb(conf=json.loads(job))
 
 
 with DAG(
