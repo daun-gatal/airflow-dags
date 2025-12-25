@@ -1,3 +1,6 @@
+"""
+Example DAG demonstrating simple operators and dependencies.
+"""
 import datetime
 
 from airflow.sdk import DAG

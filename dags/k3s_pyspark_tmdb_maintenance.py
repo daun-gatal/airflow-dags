@@ -1,8 +1,7 @@
-from datetime import datetime
 import logging
+import time
 
-from airflow.sdk import DAG
-
+from airflow.sdk import DAG  # pylint: disable=no-name-in-module
 
 logger = logging.getLogger(__name__)
 
@@ -37,18 +36,17 @@ def k3s_pyspark_tmdb(conf: dict) -> None:
             except client.exceptions.ApiException as e:
                 if e.status == 404:
                     break
-                else:
-                    raise
+                raise
 
         # Recreate job fresh
         batch.create_namespaced_job(namespace=namespace, body=conf)
-        logger.info(f"Recreated Job: {name}")
+        logger.info("Recreated Job: %s", name)
 
     except client.exceptions.ApiException as e:
         if e.status == 404:
             # Job does not exist yet → create new one
             batch.create_namespaced_job(namespace=namespace, body=conf)
-            logger.info(f"Created Job: {name}")
+            logger.info("Created Job: %s", name)
         else:
             raise e
 
