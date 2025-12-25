@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import time
 
@@ -27,7 +28,7 @@ def k3s_pyspark_tmdb(conf: dict) -> None:
         )
 
         # Wait until job disappears (optional but safer)
-        import time
+        # Wait until job disappears (optional but safer)
 
         for _ in range(30):
             try:
