@@ -26,12 +26,12 @@ def k3s_pyspark_tmdb(conf: dict) -> None:
                 plural="sparkapplications",
                 name=name,
             )
-            logger.info(f"Deleting existing SparkApplication: {name}")
+            logger.info("Deleting existing SparkApplication: %s", name)
 
         except client.exceptions.ApiException as e:
             if e.status == 404:
                 logger.info(
-                    f"SparkApplication {name} does not exist. Creating new one."
+                    "SparkApplication %s does not exist. Creating new one.", name
                 )
             else:
                 raise e
@@ -47,10 +47,10 @@ def k3s_pyspark_tmdb(conf: dict) -> None:
             plural="sparkapplications",
             body=conf,
         )
-        logger.info(f"Applied SparkApplication: {name}")
+        logger.info("Applied SparkApplication: %s", name)
 
     except Exception as e:
-        logger.error(f"Error deploying SparkApplication: {e}")
+        logger.error("Error deploying SparkApplication: %s", e)
         raise
 
 

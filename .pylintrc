@@ -1,0 +1,11 @@
+[MESSAGES CONTROL]
+disable=
+    C0114, # missing-module-docstring (we'll fix some, but optional for pure config)
+    C0116, # missing-function-docstring
+    W0104, # pointless-statement (triggers on DAG bitshift operators)
+    C0415, # import-outside-toplevel (common in Airflow)
+    R0801, # duplicate-code (common in boilerplate DAGs)
+    R0914, # too-many-locals
+
+[FORMAT]
+max-line-length=120
