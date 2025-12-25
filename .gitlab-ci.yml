@@ -32,7 +32,7 @@ test dags:
   stage: test
   needs: ["lint dags"]
   image: 
-    name: apache/airflow:${AIRFLOW_VERSION}-slim
+    name: apache/airflow:slim-${AIRFLOW_VERSION}
     entrypoint: [""]
   before_script:
     - pip install --upgrade pip
@@ -41,7 +41,3 @@ test dags:
     - airflow db migrate
   script:
     - pytest tests/
-  cache:
-    paths:
-      - .pip-cache/
-    key: "$CI_PROJECT_ID"
