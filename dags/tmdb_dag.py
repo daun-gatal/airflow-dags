@@ -1,3 +1,7 @@
+"""
+DAG to ingest data from TMDB API to Kafka.
+"""
+
 from datetime import datetime
 from airflow.sdk import DAG
 from airflow.providers.standard.operators.empty import EmptyOperator
@@ -6,9 +10,12 @@ import requests
 
 
 def get_movie_ids(start_date: str, end_date: str, api_key: str, base_url: str):
+    """
+    Fetch movie IDs from TMDB and yield them for Kafka production.
+    """
     import random
     import time
-    import json
+    import json  # pylint: disable=redefined-outer-name
 
     page = 1
 
@@ -96,7 +103,8 @@ with DAG(
         producer_function_kwargs={
             "api_key": "{{ var.value.TMDB_API_KEY }}",
             "base_url": "{{ var.value.TMDB_API_BASE_URL}}",
-            "start_date": "{{ (macros.datetime.strptime(ds, '%Y-%m-%d') + macros.timedelta(days=-1)).strftime('%Y-%m-%d') }}",
+            "start_date": "{{ (macros.datetime.strptime(ds, '%Y-%m-%d') + "
+            "macros.timedelta(days=-1)).strftime('%Y-%m-%d') }}",
             "end_date": "{{ ds }}",
         },
     )
