@@ -32,7 +32,7 @@ test dags:
   stage: test
   needs: ["lint dags"]
   image: 
-    name: apache/airflow:${AIRFLOW_VERSION}
+    name: apache/airflow:${AIRFLOW_VERSION}-slim
     entrypoint: [""]
   before_script:
     - pip install --upgrade pip

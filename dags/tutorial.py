@@ -4,7 +4,6 @@ Tutorial DAG from Airflow documentation.
 from __future__ import annotations
 
 import pendulum
-
 from airflow.decorators import dag, task
 
 
