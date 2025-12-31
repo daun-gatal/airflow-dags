@@ -43,30 +43,29 @@ jobs:
     name: Test Dags
     needs: lint
     runs-on: self-hosted
-    container:
-      image: apache/airflow:slim-3.1.5
-      options: --entrypoint "" --user root # Override entrypoint and run as root to fix permissions
     env:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: sqlite:////tmp/airflow.db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       PYTHONWARNINGS: "ignore::DeprecationWarning"
-      PIP_USER: "false"
-      PIP_ROOT_USER_ACTION: "ignore"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Install dependencies and Run Tests
         run: |
           python -m pip install --upgrade pip
+          python -m pip install apache-airflow==${{ env.AIRFLOW_VERSION }} --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${{ env.AIRFLOW_VERSION }}/constraints-${{ env.PYTHON_VERSION }}.txt" || python -m pip install apache-airflow==${{ env.AIRFLOW_VERSION }}
           python -m pip install -r requirements.txt
           
-          # Set AIRFLOW_HOME to current workspace as per original config
+          # Set AIRFLOW_HOME to current workspace
           export AIRFLOW_HOME=$(pwd)
           
-          # Add user bin to PATH to find airflow and pytest executables installed with --user
-          export PATH=$PATH:$HOME/.local/bin
-          
+          # Initialize DB
           echo "Initializing DB..."
           airflow db migrate
           
