@@ -57,6 +57,7 @@ jobs:
 
       - name: Install dependencies and Run Tests
         run: |
+          export PIP_USER=false
           pip install --upgrade pip
           pip install -r requirements.txt
           
