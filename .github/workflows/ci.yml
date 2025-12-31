@@ -50,6 +50,7 @@ jobs:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: sqlite:////tmp/airflow.db
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       PYTHONWARNINGS: "ignore::DeprecationWarning"
+      PIP_USER: "false"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -57,7 +58,7 @@ jobs:
       - name: Install dependencies and Run Tests
         run: |
           pip install --upgrade pip
-          pip install --user -r requirements.txt
+          pip install -r requirements.txt
           
           # Set AIRFLOW_HOME to current workspace as per original config
           export AIRFLOW_HOME=$(pwd)
