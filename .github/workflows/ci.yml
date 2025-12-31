@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+
+env:
+  AIRFLOW_VERSION: "3.1.5"
+  PYTHON_VERSION: "3.9"
+
+jobs:
+  lint:
+    name: Lint Dags
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pylint black
+
+      - name: Run Black
+        run: |
+          echo "Running Black..."
+          black --check dags/
+
+      - name: Run Pylint
+        run: |
+          echo "Running Pylint..."
+          pylint --disable=import-error dags/
+
+  test:
+    name: Test Dags
+    needs: lint
+    runs-on: ubuntu-latest
+    container:
+      image: apache/airflow:slim-3.1.5
+      options: --entrypoint "" # Override entrypoint as per GitLab config
+    env:
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: sqlite:////tmp/airflow.db
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      PYTHONWARNINGS: "ignore::DeprecationWarning"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies and Run Tests
+        run: |
+          pip install --upgrade pip
+          pip install --user -r requirements.txt
+          
+          # Set AIRFLOW_HOME to current workspace as per original config
+          export AIRFLOW_HOME=$(pwd)
+          
+          # Add user bin to PATH to find airflow and pytest executables installed with --user
+          export PATH=$PATH:$HOME/.local/bin
+          
+          echo "Initializing DB..."
+          airflow db migrate
+          
+          echo "Running Tests..."
+          pytest tests/
